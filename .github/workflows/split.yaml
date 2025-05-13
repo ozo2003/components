@@ -1,0 +1,49 @@
+name: split
+
+on:
+    workflow_call:
+        inputs:
+            GH_TOKEN:
+                required: true
+                type: string
+
+jobs:
+    split:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Get branch name
+              id: branch
+              shell: bash
+              run: echo "branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
+
+            - name: Publish split.json to public mirror
+              run: |
+                  REPO_NAME="${GITHUB_REPOSITORY##*/}"
+                  BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+                  
+                  git config --global user.name "GitHub Action"
+                  git config --global user.email "action@github.com"
+                  
+                  git clone --depth=1 --single-branch --branch master https://x-access-token:${{ inputs.GH_TOKEN }}@github.com/ozo2003/components.git public-mirror
+                  
+                  mkdir -p "public-mirror/$REPO_NAME"
+                  cp .github/split.json "public-mirror/$REPO_NAME/$BRANCH_NAME.json"
+                  
+                  cd public-mirror
+                  git add .
+                  git commit -m "Update $REPO_NAME/$BRANCH_NAME.json" || echo "No changes to commit"
+                  git push
+
+            - name: Wait for push to settle
+              run: sleep 5
+
+            - name: Run split
+              uses: docker://ghcr.io/960018/action-split:latest
+              env:
+                  BRANCH: ${{ steps.branch.outputs.branch }}
+                  REPO: ${{ github.repository }}
+                  GH_TOKEN: ${{ inputs.GH_TOKEN }}
+                  COMPONENTS_URL: https://raw.githubusercontent.com/ozo2003/components/master/${{ github.event.repository.name }}/${{ steps.branch.outputs.branch }}.json
