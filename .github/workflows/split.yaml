@@ -2,10 +2,9 @@ name: split
 
 on:
     workflow_call:
-        inputs:
+        secrets:
             GH_TOKEN:
                 required: true
-                type: string
 
 jobs:
     split:
@@ -27,7 +26,7 @@ jobs:
                   git config --global user.name "GitHub Action"
                   git config --global user.email "action@github.com"
                   
-                  git clone --depth=1 --single-branch --branch master https://x-access-token:${{ inputs.GH_TOKEN }}@github.com/ozo2003/components.git public-mirror
+                  git clone --depth=1 --single-branch --branch master https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/ozo2003/components.git public-mirror
                   
                   mkdir -p "public-mirror/$REPO_NAME"
                   cp .github/split.json "public-mirror/$REPO_NAME/$BRANCH_NAME.json"
@@ -45,5 +44,5 @@ jobs:
               env:
                   BRANCH: ${{ steps.branch.outputs.branch }}
                   REPO: ${{ github.repository }}
-                  GH_TOKEN: ${{ inputs.GH_TOKEN }}
+                  GH_TOKEN: ${{ secrets.GH_TOKEN }}
                   COMPONENTS_URL: https://raw.githubusercontent.com/ozo2003/components/master/${{ github.event.repository.name }}/${{ steps.branch.outputs.branch }}.json
