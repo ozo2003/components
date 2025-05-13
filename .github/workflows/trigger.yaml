@@ -1,0 +1,31 @@
+name: trigger
+
+on:
+    workflow_call:
+        secrets:
+            GH_TOKEN:
+                required: true
+            GITLAB_PROJECT_ID:
+                required: true
+            GITLAB_TRIGGER_TOKEN:
+                required: true
+            GH_REPOSITORY:
+                required: true
+
+jobs:
+    trigger:
+        runs-on: ubuntu-latest
+        steps:
+            -   name: Trigger GitLab pipeline
+                run: |
+                    REPO_NAME="${GITHUB_REPOSITORY##*/}"
+                    curl --request POST "https://gitlab.com/api/v4/projects/${GITLAB_PROJECT_ID}/trigger/pipeline" \
+                      --form token="${GITLAB_TRIGGER_TOKEN}" \
+                      --form ref="${{ github.ref_name }}" \
+                      --form "variables[REPOSITORY]=${{ secrets.GH_REPOSITORY }}" \
+                      --form "variables[PROJECT]=$REPO_NAME" \
+                      --form "variables[BRANCH]=${{ github.ref_name }}" \
+                      --form "variables[COMMIT_SHA]=${{ github.sha }}"
+                env:
+                    GITLAB_PROJECT_ID: ${{ secrets.GITLAB_PROJECT_ID }}
+                    GITLAB_TRIGGER_TOKEN: ${{ secrets.GITLAB_TRIGGER_TOKEN }}
