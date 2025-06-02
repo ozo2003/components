@@ -1,0 +1,14 @@
+[
+    {
+        "path": "shared",
+        "repo": "https://GH_TOKEN@github.com/lettland/shared.git"
+    },
+    {
+        "path": "apps/tools",
+        "repo": "https://GH_TOKEN@github.com/lettland/tools.git"
+    },
+    {
+        "path": "apps/landing",
+        "repo": "https://GH_TOKEN@github.com/lettland/landing.git"
+    }
+]
