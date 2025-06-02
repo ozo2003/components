@@ -11,6 +11,13 @@ on:
                 required: true
             GH_REPOSITORY:
                 required: true
+        inputs:
+            PROJECT:
+                required: false
+                type: string
+            COMMIT_MESSAGE:
+                required: false
+                type: string
 
 jobs:
     trigger:
@@ -19,13 +26,24 @@ jobs:
             -   name: Trigger GitLab pipeline
                 run: |
                     REPO_NAME="${GITHUB_REPOSITORY##*/}"
-                    curl --request POST "https://gitlab.com/api/v4/projects/${GITLAB_PROJECT_ID}/trigger/pipeline" \
-                      --form token="${GITLAB_TRIGGER_TOKEN}" \
-                      --form ref="${{ github.ref_name }}" \
-                      --form "variables[REPOSITORY]=${{ secrets.GH_REPOSITORY }}" \
-                      --form "variables[PROJECT]=$REPO_NAME" \
-                      --form "variables[BRANCH]=${{ github.ref_name }}" \
-                      --form "variables[COMMIT_SHA]=${{ github.sha }}"
+                    if [ -n "${{ inputs.PROJECT }}" ]; then
+                        REPO_NAME="${{ inputs.PROJECT }}"
+                    fi
+                    CURL_CMD=(
+                        curl --request POST "https://gitlab.com/api/v4/projects/${GITLAB_PROJECT_ID}/trigger/pipeline"
+                            --form token="${GITLAB_TRIGGER_TOKEN}"
+                            --form ref="${{ github.ref_name }}"
+                            --form "variables[REPOSITORY]=${{ secrets.GH_REPOSITORY }}"
+                            --form "variables[PROJECT]=$REPO_NAME"
+                            --form "variables[BRANCH]=${{ github.ref_name }}"
+                            --form "variables[COMMIT_SHA]=${{ github.sha }}"
+                    )
+
+                    if [ -n "${{ inputs.COMMIT_MESSAGE }}" ]; then
+                        CURL_CMD+=( --form "variables[COMMIT_MESSAGE]=${{ inputs.COMMIT_MESSAGE }}" )
+                    fi
+
+                    "${CURL_CMD[@]}"
                 env:
                     GITLAB_PROJECT_ID: ${{ secrets.GITLAB_PROJECT_ID }}
                     GITLAB_TRIGGER_TOKEN: ${{ secrets.GITLAB_TRIGGER_TOKEN }}
