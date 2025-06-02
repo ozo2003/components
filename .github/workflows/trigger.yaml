@@ -9,13 +9,14 @@ on:
                 required: true
             GITLAB_TRIGGER_TOKEN:
                 required: true
-            GH_REPOSITORY:
-                required: true
         inputs:
             PROJECT:
                 required: false
                 type: string
             COMMIT_MESSAGE:
+                required: false
+                type: string
+            GH_REPOSITORY:
                 required: false
                 type: string
 
@@ -33,7 +34,7 @@ jobs:
                         curl --request POST "https://gitlab.com/api/v4/projects/${GITLAB_PROJECT_ID}/trigger/pipeline"
                             --form token="${GITLAB_TRIGGER_TOKEN}"
                             --form ref="${{ github.ref_name }}"
-                            --form "variables[REPOSITORY]=${{ secrets.GH_REPOSITORY }}"
+                            --form "variables[REPOSITORY]=${{ inputs.GH_REPOSITORY }}"
                             --form "variables[PROJECT]=$REPO_NAME"
                             --form "variables[BRANCH]=${{ github.ref_name }}"
                             --form "variables[COMMIT_SHA]=${{ github.sha }}"
